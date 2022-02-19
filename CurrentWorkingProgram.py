@@ -2,9 +2,9 @@
 import cv2
 import os
 import serial
-from datetime import date, datetime
+from datetime import datetime
 
-# Get current date and time in mm/dd/YY and H:M:S format
+# Get current date and time in mm-dd-YY and H-M:- format
 current_date_time = datetime.now()
 date_time_string = current_date_time.strftime("%m-%d-%Y T%H-%M-%S")
 
@@ -45,7 +45,6 @@ def mean(nums):
 #         cv2.destroyAllWindows()
 
 
-
 # The image_function is responsible for capturing, naming, and saving the image
 def image_function():
     # Set up / initialize the camera with the correct port number (usually 0 or 1)
@@ -65,6 +64,7 @@ def image_function():
         cv2.waitKey(0)
 
         # Set variables for the file name and storage
+        # The file_name is set to the date and time of the picture
         image_path = "C:/Users/hanna/PycharmProjects/microscopeImages"
         file_name = date_time_string
 

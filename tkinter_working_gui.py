@@ -10,11 +10,10 @@ import os
 import serial
 import time
 from imutils.video import VideoStream
-import csv
+from pandasFunction import *
 
 # Set the correct port for the arduino
 ser = serial.Serial(port="COM6")
-
 
 class MicroscopeImages:
     def __init__(self, vs, outputPath):
@@ -40,7 +39,7 @@ class MicroscopeImages:
         # create a selection bar for the user to select the study
         self.selection_frame = Frame(self.root)
         self.selection_frame.pack(side=TOP, ipady=10)
-        self.options = ["Improve",
+        self.options = ["IMPROVE",
                         "CSN",
                         "Special Studies",
                         "Custom"]
@@ -83,12 +82,10 @@ class MicroscopeImages:
     # Function to retrieve the selected study
     def selected_options(self, study):
         self.study = study
-        print(study)
 
     # Function to retrieve the entered study tray ID
     def print_ID(self):
         self.tray_ID = int(self.study_tray_ID.get())
-        print(self.tray_ID)
 
     def videoLoop(self):
         # DISCLAIMER: This try/except statement is a pretty ugly hack to get around a RunTime error that Tkinter throws due to threading
@@ -186,6 +183,8 @@ class MicroscopeImages:
         os._exit(0)
 
 
+
+
 # specify the image path of where to save the captured images
 image_path = "C:/Users/hanna/PycharmProjects/microscopeImages"
 # specify the video source, likely 0 or 1
@@ -195,3 +194,6 @@ time.sleep(1)
 # create an instance of the MicroscopeImages class and start the main loop of the tkinter window
 microscope_images_instance = MicroscopeImages(vs, image_path)
 microscope_images_instance.root.mainloop()
+
+
+
