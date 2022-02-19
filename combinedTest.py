@@ -26,7 +26,6 @@ class MicroscopeImages:
         self.stopEvent = None
         self.stopArduino = None
         self.study = None
-        self.image_counter = 0
 
         # initialize the root window and image panel
         self.root = tki.Tk()
@@ -57,8 +56,9 @@ class MicroscopeImages:
         self.study_tray_ID = Entry(self.study_tray_ID_frame)
         self.study_tray_ID.pack()
 
-        enter_button = Button(self.root, text="Enter", command=lambda:[self.print_ID(), self.test_func()])
+        enter_button = Button(self.root, text="Enter", command=self.print_ID)
         enter_button.pack()
+
 
         # start a thread that constantly pools the video sensor for the most recently read frame
         # stop event is what will end the threading and thus end the pooling of the video stream
@@ -80,6 +80,7 @@ class MicroscopeImages:
         # Clicks is the list that stores the last 10 bits
         self.clicks = []
 
+
     # Function to retrieve the selected study
     def selected_options(self, study):
         self.study = study
@@ -91,9 +92,8 @@ class MicroscopeImages:
         print(self.tray_ID)
 
     def test_func(self):
-        self.filter_IDs = func(self.study, self.tray_ID)[0]
-        self.filter_position = func(self.study, self.tray_ID)[1]
-        self.sample_date = func(self.study, self.tray_ID)[2]
+        filter_id = func(self.study, self.tray_ID)
+        print(filter_id)
 
     def videoLoop(self):
         # DISCLAIMER: This try/except statement is a pretty ugly hack to get around a RunTime error that Tkinter throws due to threading
@@ -152,12 +152,12 @@ class MicroscopeImages:
             if decoded_bytes == "1" and avg <= 0.1:
                 time.sleep(2)
                 self.takeSnapshot()
-                #self.test_func()
+                self.test_func()
 
     def takeSnapshot(self):
         # grab the current timestamp and use it to construct the output path
         ts = datetime.datetime.now()
-        filename = "{}.jpg".format(self.filter_IDs[self.image_counter] + '_' + ts.strftime("%Y-%m-%d_%H-%M-%S"))
+        filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
         p = os.path.sep.join((self.outputPath, filename))
         captured_image = self.frame.copy()
         # percent by which the image is resized
@@ -171,9 +171,7 @@ class MicroscopeImages:
         scaled_size = (scaled_width, scaled_height)
         captured_image = cv2.resize(captured_image, scaled_size)
         # display the image to the user
-        cv2.imshow("Filter ID: " + self.filter_IDs[self.image_counter] + "          Filter Position: " +\
-                   str(self.filter_position[self.image_counter]) + "            Sample Date: " +\
-                   str(self.sample_date[self.image_counter]), captured_image)
+        cv2.imshow("Image", captured_image)
         # waitkey displays the image to the screen until the user presses any key
         cv2.waitKey(0)
         # this closes the image that was being displayed
@@ -181,7 +179,6 @@ class MicroscopeImages:
         # save the file
         cv2.imwrite(p, captured_image)
         print("Image Saved {}".format(filename))
-        self.image_counter = self.image_counter + 1
 
     def onClose(self):
         # set the stop event, cleanup the camera, and allow the rest of the quit process to continue
@@ -193,6 +190,8 @@ class MicroscopeImages:
         self.root.destroy()
         # force exit program
         os._exit(0)
+
+
 
 
 # specify the image path of where to save the captured images
