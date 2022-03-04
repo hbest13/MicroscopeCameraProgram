@@ -1,7 +1,7 @@
 from PIL import Image
 from PIL import ImageTk
 import tkinter as tki
-from tkinter import Frame, StringVar, OptionMenu, TOP, BOTTOM, LEFT, RIGHT, Entry, Button, Label, Text
+from tkinter import Frame, StringVar, OptionMenu, TOP, BOTTOM, LEFT, RIGHT, Entry, Button, Label, Text, Message, Toplevel
 import threading
 import datetime
 import imutils
@@ -62,6 +62,8 @@ class MicroscopeImages:
         self.study_tray_ID = Entry(self.study_tray_ID_frame)
         self.study_tray_ID.pack(ipady=5)
 
+        self.label = Label(self.study_tray_ID_frame)
+
         enter_button = Button(self.study_tray_ID_frame, text="Enter", command=lambda: [self.print_ID(), self.test_func(), self.display_selections()])
         enter_button.pack(ipady=5)
 
@@ -92,6 +94,7 @@ class MicroscopeImages:
 
     # Function to retrieve the entered study tray ID
     def print_ID(self):
+        self.label.destroy()
         self.tray_ID = int(self.study_tray_ID.get())
         print(self.tray_ID)
 
@@ -162,71 +165,88 @@ class MicroscopeImages:
             # ten bits is less than 0.1 (meaning the '1' is an actual click and not just 'bouncing'), then
             # an image will be taken
             if decoded_bytes == "1" and avg <= 0.1:
-                time.sleep(5)
-                #self.test_func()
+                self.top = Toplevel(self.root)
+                self.top.geometry("600x50")
+                Message(self.top, text='CAPTURING IMAGE, PLEASE WAIT.', width=500, anchor='center',font=("Courier", 20)).pack()
+                time.sleep(1)
+                self.top.destroy()
                 self.takeSnapshot()
                 self.test_func()
 
     def takeSnapshot(self):
-        self.current_filter_ID = str(self.filter_id[self.i])
-        print(self.i)
-        # grab the current timestamp and use it to construct the output path
-        ts = datetime.datetime.now()
-        filename = "{}.jpg".format(self.current_filter_ID + "_" + ts.strftime("%Y-%m-%d_%H-%M-%S"))
-        csv_file_name = "{}.csv".format(self.current_filter_ID + "_" + ts.strftime("%Y-%m-%d_%H-%M-%S"))
-        if self.study == 'IMPROVE':
-            self.specific_path = self.outputPath + '/IMPROVE' + '/Study Tray ID ' + str(self.study_tray_ID.get())
-            while not os.path.isdir(self.specific_path):
-                os.mkdir(self.specific_path)
-            p = os.path.sep.join((self.specific_path, filename))
-            p2 = os.path.sep.join((self.specific_path, csv_file_name))
-        if self.study == 'CSN':
-            self.specific_path = self.outputPath + '/CSN' + '/Study Tray ID ' + str(self.study_tray_ID.get())
-            while not os.path.isdir(self.specific_path):
-                os.mkdir(self.specific_path)
-            p = os.path.sep.join((self.specific_path, filename))
-            p2 = os.path.sep.join((self.specific_path, csv_file_name))
-        if self.study == 'Special Studies':
-            self.specific_path = self.outputPath + '/Special Studies' + '/Study Tray ID ' + str(self.study_tray_ID.get())
-            while not os.path.isdir(self.specific_path):
-                os.mkdir(self.specific_path)
-            p = os.path.sep.join((self.specific_path, filename))
-            p2 = os.path.sep.join((self.specific_path, csv_file_name))
-        if self.study == 'Custom':
-            self.specific_path = self.outputPath + '/Custom' + '/Study Tray ID ' + str(self.study_tray_ID.get())
-            while not os.path.isdir(self.specific_path):
-                os.mkdir(self.specific_path)
-            p = os.path.sep.join((self.specific_path, filename))
-            p2 = os.path.sep.join((self.specific_path, csv_file_name))
-        captured_image = self.frame.copy()
-        # percent by which the image is resized
-        scale_percent = 16
+        if self.i < len(self.filter_id):
+            self.current_filter_ID = str(self.filter_id[self.i])
+            # grab the current timestamp and use it to construct the output path
+            ts = datetime.datetime.now()
+            filename = "{}.jpg".format(self.current_filter_ID + "_" + ts.strftime("%Y-%m-%d_%H-%M-%S"))
+            csv_file_name = "{}.csv".format(self.current_filter_ID + "_" + ts.strftime("%Y-%m-%d_%H-%M-%S"))
+            if self.study == 'IMPROVE':
+                self.specific_path = self.outputPath + '/IMPROVE' + '/Study Tray ID ' + str(self.study_tray_ID.get())
+                while not os.path.isdir(self.specific_path):
+                    os.mkdir(self.specific_path)
+                p = os.path.sep.join((self.specific_path, filename))
+                p2 = os.path.sep.join((self.specific_path, csv_file_name))
+            if self.study == 'CSN':
+                self.specific_path = self.outputPath + '/CSN' + '/Study Tray ID ' + str(self.study_tray_ID.get())
+                while not os.path.isdir(self.specific_path):
+                    os.mkdir(self.specific_path)
+                p = os.path.sep.join((self.specific_path, filename))
+                p2 = os.path.sep.join((self.specific_path, csv_file_name))
+            if self.study == 'Special Studies':
+                self.specific_path = self.outputPath + '/Special Studies' + '/Study Tray ID ' + str(self.study_tray_ID.get())
+                while not os.path.isdir(self.specific_path):
+                    os.mkdir(self.specific_path)
+                p = os.path.sep.join((self.specific_path, filename))
+                p2 = os.path.sep.join((self.specific_path, csv_file_name))
+            if self.study == 'Custom':
+                self.specific_path = self.outputPath + '/Custom' + '/Study Tray ID ' + str(self.study_tray_ID.get())
+                while not os.path.isdir(self.specific_path):
+                    os.mkdir(self.specific_path)
+                p = os.path.sep.join((self.specific_path, filename))
+                p2 = os.path.sep.join((self.specific_path, csv_file_name))
+            #captured_image = self.frame.copy()
+            captured_image = self.vs.read()
+            # percent by which the image is resized
+            scale_percent = 18
 
-        # calculate the 50 percent of original dimensions
-        scaled_width = int(captured_image.shape[1] * scale_percent / 100)
-        scaled_height = int(captured_image.shape[0] * scale_percent / 100)
+            # calculate the 50 percent of original dimensions
+            scaled_width = int(captured_image.shape[1] * scale_percent / 100)
+            scaled_height = int(captured_image.shape[0] * scale_percent / 100)
 
-        # dsize
-        scaled_size = (scaled_width, scaled_height)
-        captured_image = cv2.resize(captured_image, scaled_size)
-        # display the image to the user
-        # str(self.filter_position[self.i])\
-        cv2.imshow("Filter ID: " + str(self.current_filter_ID) + "       Filter Position: " + str(self.list_index + 1)\
-                + "       Filter Date: " + str(self.filter_date[self.i]), captured_image)
-        # self.csv_filter_position = str(self.filter_position[self.i])
-        self.csv_filter_position = str(self.i + 1)
-        self.csv_filter_date = str(self.filter_date[self.i])
-        self.i += 1
-        self.list_index += 1
-        # waitkey displays the image to the screen until the user presses any key
-        cv2.waitKey(0)
-        # this closes the image that was being displayed
-        cv2.destroyAllWindows()
-        # save the file
-        cv2.imwrite(p, captured_image)
-        csv_creation(p2, str(self.current_filter_ID), self.csv_filter_position, self.csv_filter_date)
-        # process_image_function_r('C:/Users/hanna/OneDrive/Pictures/green.jpg')
-        print("Image Saved {}".format(filename))
+            # dsize
+            scaled_size = (scaled_width, scaled_height)
+            captured_image = cv2.resize(captured_image, scaled_size)
+            # display the image to the user
+            # str(self.filter_position[self.i])\
+            cv2.imshow("Filter ID: " + str(self.current_filter_ID) + "     Filter Position: " + str(self.list_index + 1)\
+                    + "     Filter Date: " + str(self.filter_date[self.i]) + "       Press SPACE to save or ENTER to retake.", captured_image)
+            # self.csv_filter_position = str(self.filter_position[self.i])
+            self.csv_filter_position = str(self.i + 1)
+            self.csv_filter_date = str(self.filter_date[self.i])
+            # waitkey displays the image to the screen until the user presses any key
+            self.key = cv2.waitKey(0)
+            if self.key == 32:
+                self.i += 1
+                self.list_index += 1
+                # this closes the image that was being displayed
+                cv2.destroyAllWindows()
+                # save the file
+                cv2.imwrite(p, captured_image)
+                csv_creation(p2, str(self.current_filter_ID), self.csv_filter_position, self.csv_filter_date)
+                # process_image_function_r('C:/Users/hanna/OneDrive/Pictures/green.jpg')
+                print("Image Saved {}".format(filename))
+            if self.key == 13:
+                cv2.destroyAllWindows()
+
+        if self.i >= len(self.filter_id):
+            self.i = 0
+            self.second_top = Toplevel(self.root)
+            self.second_top.geometry("800x50")
+            Message(self.second_top, text='Tray Complete! Please Select New Tray.', width=800, anchor='center',
+                    font=("Courier", 20)).pack()
+            #time.sleep(10)
+            #self.top.destroy()
+
 
     def onClose(self):
         # set the stop event, cleanup the camera, and allow the rest of the quit process to continue
