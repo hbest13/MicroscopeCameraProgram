@@ -56,7 +56,7 @@ def func(studyUserInput, studyTrayUserInput):
 def csv_creation(csv_file_name, filter_id, filter_position, sample_date):
 
     # open the file in the write mode
-    f = open(csv_file_name, 'w')
+    f = open(csv_file_name, 'w', newline="")
 
     # create the csv writer
     writer = csv.writer(f)
