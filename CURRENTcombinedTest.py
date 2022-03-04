@@ -11,7 +11,8 @@ import serial
 import time
 from imutils.video import VideoStream
 from CURRENTpandasFunction import *
-from CURRENTimportedR import *
+import pygame
+# from CURRENTimportedR import *
 
 # Set the correct port for the arduino
 ser = serial.Serial(port="COM6")
@@ -28,6 +29,7 @@ class MicroscopeImages:
         self.stopArduino = None
         self.study = None
         self.i = 0
+        self.list_index = 0
 
         # initialize the root window and image panel
         self.root = tki.Tk()
@@ -96,12 +98,14 @@ class MicroscopeImages:
     def test_func(self):
         self.filter_id = func(self.study, self.tray_ID)[0]
         self.filter_position = func(self.study, self.tray_ID)[1]
+        # self.list_index = 0
         self.filter_date = func(self.study, self.tray_ID)[2]
 
     def display_selections(self):
         # Create label
-        selection_display = Label(self.study_tray_ID_frame, text="Study :  " + self.study + "       Tray ID # :  " + str(self.tray_ID))
-        selection_display.pack()
+        self.label = Label(self.study_tray_ID_frame)
+        self.label.configure(text="Study :  " + self.study + "       Tray ID # :  " + str(self.tray_ID))
+        self.label.pack()
 
     def videoLoop(self):
         # DISCLAIMER: This try/except statement is a pretty ugly hack to get around a RunTime error that Tkinter throws due to threading
@@ -158,12 +162,14 @@ class MicroscopeImages:
             # ten bits is less than 0.1 (meaning the '1' is an actual click and not just 'bouncing'), then
             # an image will be taken
             if decoded_bytes == "1" and avg <= 0.1:
-                time.sleep(2)
+                time.sleep(5)
+                #self.test_func()
                 self.takeSnapshot()
                 self.test_func()
 
     def takeSnapshot(self):
-        self.current_filter_ID = self.filter_id[self.i]
+        self.current_filter_ID = str(self.filter_id[self.i])
+        print(self.i)
         # grab the current timestamp and use it to construct the output path
         ts = datetime.datetime.now()
         filename = "{}.jpg".format(self.current_filter_ID + "_" + ts.strftime("%Y-%m-%d_%H-%M-%S"))
@@ -179,16 +185,19 @@ class MicroscopeImages:
             while not os.path.isdir(self.specific_path):
                 os.mkdir(self.specific_path)
             p = os.path.sep.join((self.specific_path, filename))
+            p2 = os.path.sep.join((self.specific_path, csv_file_name))
         if self.study == 'Special Studies':
             self.specific_path = self.outputPath + '/Special Studies' + '/Study Tray ID ' + str(self.study_tray_ID.get())
             while not os.path.isdir(self.specific_path):
                 os.mkdir(self.specific_path)
             p = os.path.sep.join((self.specific_path, filename))
+            p2 = os.path.sep.join((self.specific_path, csv_file_name))
         if self.study == 'Custom':
             self.specific_path = self.outputPath + '/Custom' + '/Study Tray ID ' + str(self.study_tray_ID.get())
             while not os.path.isdir(self.specific_path):
                 os.mkdir(self.specific_path)
             p = os.path.sep.join((self.specific_path, filename))
+            p2 = os.path.sep.join((self.specific_path, csv_file_name))
         captured_image = self.frame.copy()
         # percent by which the image is resized
         scale_percent = 16
@@ -201,17 +210,22 @@ class MicroscopeImages:
         scaled_size = (scaled_width, scaled_height)
         captured_image = cv2.resize(captured_image, scaled_size)
         # display the image to the user
-        cv2.imshow("Filter ID: " + str(self.current_filter_ID) + "       Filter Position: " + str(self.filter_position[self.i])\
+        # str(self.filter_position[self.i])\
+        cv2.imshow("Filter ID: " + str(self.current_filter_ID) + "       Filter Position: " + str(self.list_index + 1)\
                 + "       Filter Date: " + str(self.filter_date[self.i]), captured_image)
+        # self.csv_filter_position = str(self.filter_position[self.i])
+        self.csv_filter_position = str(self.i + 1)
+        self.csv_filter_date = str(self.filter_date[self.i])
         self.i += 1
+        self.list_index += 1
         # waitkey displays the image to the screen until the user presses any key
         cv2.waitKey(0)
         # this closes the image that was being displayed
         cv2.destroyAllWindows()
         # save the file
         cv2.imwrite(p, captured_image)
-        csv_creation(p2, str(self.current_filter_ID))
-        process_image_function_r('C:/Users/hanna/OneDrive/Pictures/green.jpg')
+        csv_creation(p2, str(self.current_filter_ID), self.csv_filter_position, self.csv_filter_date)
+        # process_image_function_r('C:/Users/hanna/OneDrive/Pictures/green.jpg')
         print("Image Saved {}".format(filename))
 
     def onClose(self):
